@@ -1,0 +1,958 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Учет закупок - Голосовой ввод</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, 'Segoe UI', Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 10px;
+            background: #f5f5f5;
+        }
+        
+        h1 {
+            color: #333;
+            margin: 10px 0;
+            text-align: center;
+            font-size: 24px;
+        }
+        
+        .budget-bar {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        
+        .budget-item {
+            flex: 1;
+            min-width: 120px;
+            text-align: center;
+        }
+        
+        .budget-label {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 5px;
+        }
+        
+        .budget-value {
+            font-size: 20px;
+            font-weight: bold;
+        }
+        
+        .budget-planned {
+            color: #2196F3;
+        }
+        
+        .budget-spent {
+            color: #f44336;
+        }
+        
+        .budget-remaining {
+            color: #4CAF50;
+        }
+        
+        .tabs {
+            display: flex;
+            gap: 5px;
+            overflow-x: auto;
+            padding: 10px;
+            background: white;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        .tab {
+            padding: 10px 15px;
+            background: #f0f0f0;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            cursor: pointer;
+            white-space: nowrap;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+        
+        .tab.active {
+            background: #4CAF50;
+            color: white;
+            border-color: #4CAF50;
+        }
+        
+        .tab-add {
+            padding: 10px 15px;
+            background: #2196F3;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            white-space: nowrap;
+            font-weight: bold;
+        }
+        
+        .point-block {
+            background: white;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .point-header {
+            background: #333;
+            color: white;
+            padding: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            cursor: pointer;
+        }
+        
+        .point-header.active-point {
+            background: #4CAF50;
+        }
+        
+        .point-title {
+            font-size: 20px;
+            font-weight: bold;
+        }
+        
+        .point-total {
+            background: rgba(255,255,255,0.2);
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 16px;
+        }
+        
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+            font-size: 14px;
+            touch-action: manipulation;
+        }
+        
+        .btn-primary {
+            background: #4CAF50;
+            color: white;
+        }
+        
+        .btn-danger {
+            background: #f44336;
+            color: white;
+        }
+        
+        .btn-warning {
+            background: #FF9800;
+            color: white;
+        }
+        
+        .btn-info {
+            background: #2196F3;
+            color: white;
+        }
+        
+        .btn-sm {
+            padding: 5px 10px;
+            font-size: 12px;
+        }
+        
+        .btn-mic {
+            background: #4CAF50;
+            color: white;
+            padding: 12px 24px;
+            font-size: 16px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+            touch-action: manipulation;
+        }
+        
+        .btn-mic.listening {
+            background: #f44336;
+            animation: pulse 1.5s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        th {
+            background: #f5f5f5;
+            padding: 10px;
+            text-align: left;
+            font-size: 13px;
+            border-bottom: 2px solid #ddd;
+        }
+        
+        td {
+            padding: 8px 10px;
+            border-bottom: 1px solid #eee;
+            font-size: 14px;
+        }
+        
+        .action-btn {
+            padding: 4px 8px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 11px;
+            margin: 0 2px;
+        }
+        
+        .edit-btn {
+            background: #2196F3;
+            color: white;
+        }
+        
+        .delete-btn {
+            background: #f44336;
+            color: white;
+        }
+        
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin: 10px 0;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        
+        #status {
+            margin: 10px 0;
+            padding: 12px;
+            border-radius: 8px;
+            background: #fff;
+            border-left: 4px solid #4CAF50;
+            font-size: 14px;
+            min-height: 40px;
+        }
+        
+        #status.error {
+            border-left-color: #f44336;
+            background: #ffebee;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+        }
+        
+        .modal-content {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            max-width: 500px;
+            margin: 30px auto;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        
+        .modal-content h2 {
+            margin-bottom: 20px;
+            color: #333;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+        
+        .form-group input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        .modal-buttons button {
+            flex: 1;
+        }
+        
+        .confirm-dialog {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            z-index: 2000;
+            max-width: 400px;
+            width: 90%;
+        }
+        
+        .confirm-dialog h3 {
+            margin-bottom: 15px;
+            color: #333;
+        }
+        
+        .confirm-dialog p {
+            margin-bottom: 20px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <h1>📦 Учет закупок</h1>
+    
+    <!-- Бюджет -->
+    <div class="budget-bar">
+        <div class="budget-item">
+            <div class="budget-label">💰 Планируемый бюджет</div>
+            <div class="budget-value budget-planned" id="plannedBudget">0 ₽</div>
+            <button class="btn btn-sm btn-info" onclick="setBudget()">Изменить</button>
+        </div>
+        <div class="budget-item">
+            <div class="budget-label">📉 Потрачено</div>
+            <div class="budget-value budget-spent" id="spentBudget">0 ₽</div>
+        </div>
+        <div class="budget-item">
+            <div class="budget-label">✅ Остаток</div>
+            <div class="budget-value budget-remaining" id="remainingBudget">0 ₽</div>
+        </div>
+    </div>
+    
+    <!-- Вкладки дат -->
+    <div class="tabs" id="tabsContainer">
+        <button class="tab-add" onclick="addNewDay()">+ Новая дата</button>
+    </div>
+    
+    <!-- Контент -->
+    <div class="controls">
+        <button id="micButton" class="btn-mic" onclick="toggleRecognition()">🎤 Голосовой ввод</button>
+        <button class="btn btn-info" onclick="addNewPoint()">➕ Точка</button>
+        <button class="btn btn-warning" onclick="addManualItem()">✍️ Товар</button>
+        <button class="btn btn-primary" onclick="exportToExcel()">📥 Экспорт</button>
+    </div>
+    
+    <div id="status">Добавьте дату, затем точку, и используйте голосовой ввод</div>
+    
+    <div id="pointsContainer"></div>
+    
+    <!-- Модальное окно товара -->
+    <div id="itemModal" class="modal">
+        <div class="modal-content">
+            <h2 id="itemModalTitle">Добавить товар</h2>
+            <input type="hidden" id="editItemId">
+            <div class="form-group">
+                <label>Наименование:</label>
+                <input type="text" id="itemName" placeholder="Куртка 001">
+            </div>
+            <div class="form-group">
+                <label>Количество (шт):</label>
+                <input type="number" id="itemQuantity" min="1" value="1">
+            </div>
+            <div class="form-group">
+                <label>Цена закупки (₽):</label>
+                <input type="number" id="itemPurchasePrice" min="0" step="0.01">
+            </div>
+            <div class="form-group">
+                <label>Цена продажи (₽):</label>
+                <input type="number" id="itemSalePrice" min="0" step="0.01">
+            </div>
+            <div class="modal-buttons">
+                <button class="btn btn-primary" onclick="saveItem()">Сохранить</button>
+                <button class="btn btn-danger" onclick="closeModal('itemModal')">Отмена</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Диалог подтверждения -->
+    <div id="confirmDialog" class="confirm-dialog" style="display:none;">
+        <h3 id="confirmTitle">Подтверждение</h3>
+        <p id="confirmMessage">Вы уверены?</p>
+        <div class="modal-buttons">
+            <button class="btn btn-danger" id="confirmYes">Да</button>
+            <button class="btn btn-info" id="confirmNo">Отмена</button>
+        </div>
+    </div>
+
+    <script>
+        let recognition;
+        let isListening = false;
+        let data = {};
+        let currentDate = null;
+        let currentPoint = null;
+        let confirmCallback = null;
+        let plannedBudget = 0;
+        
+        // Загрузка данных
+        function loadData() {
+            const saved = localStorage.getItem('purchasesData');
+            if (saved) {
+                data = JSON.parse(saved);
+            }
+            const savedBudget = localStorage.getItem('plannedBudget');
+            if (savedBudget) {
+                plannedBudget = parseFloat(savedBudget);
+            }
+            updateTabs();
+            updateBudgetDisplay();
+        }
+        
+        function saveData() {
+            localStorage.setItem('purchasesData', JSON.stringify(data));
+            localStorage.setItem('plannedBudget', plannedBudget);
+        }
+        
+        // Бюджет
+        function setBudget() {
+            const budget = prompt('Введите планируемый бюджет на день (₽):', plannedBudget || '');
+            if (budget && !isNaN(budget)) {
+                plannedBudget = parseFloat(budget);
+                saveData();
+                updateBudgetDisplay();
+            }
+        }
+        
+        function updateBudgetDisplay() {
+            let totalSpent = 0;
+            if (currentDate && data[currentDate]) {
+                Object.values(data[currentDate].points).forEach(items => {
+                    totalSpent += items.reduce((sum, item) => sum + (item.quantity * item.purchasePrice), 0);
+                });
+            }
+            
+            const remaining = plannedBudget - totalSpent;
+            
+            document.getElementById('plannedBudget').textContent = plannedBudget.toFixed(0) + ' ₽';
+            document.getElementById('spentBudget').textContent = totalSpent.toFixed(0) + ' ₽';
+            document.getElementById('remainingBudget').textContent = remaining.toFixed(0) + ' ₽';
+            
+            if (remaining < 0) {
+                document.getElementById('remainingBudget').style.color = '#f44336';
+            } else {
+                document.getElementById('remainingBudget').style.color = '#4CAF50';
+            }
+        }
+        
+        // Вкладки дат
+        function updateTabs() {
+            const container = document.getElementById('tabsContainer');
+            container.innerHTML = '';
+            
+            const dates = Object.keys(data).sort((a, b) => new Date(b.split('.').reverse().join('-')) - new Date(a.split('.').reverse().join('-')));
+            
+            dates.forEach(date => {
+                const tab = document.createElement('div');
+                tab.className = 'tab';
+                if (date === currentDate) {
+                    tab.classList.add('active');
+                }
+                tab.textContent = date;
+                tab.onclick = () => switchDate(date);
+                container.appendChild(tab);
+            });
+            
+            const addBtn = document.createElement('button');
+            addBtn.className = 'tab-add';
+            addBtn.textContent = '+ Новая дата';
+            addBtn.onclick = addNewDay;
+            container.appendChild(addBtn);
+        }
+        
+        function addNewDay() {
+            const date = prompt('Введите дату закупки (например: 30.08.2026):');
+            if (date && date.trim()) {
+                if (!data[date]) {
+                    data[date] = { points: {} };
+                    saveData();
+                }
+                switchDate(date);
+            }
+        }
+        
+        function switchDate(date) {
+            currentDate = date;
+            currentPoint = null;
+            updateTabs();
+            renderPoints();
+            updateBudgetDisplay();
+        }
+        
+        // Точки
+        function addNewPoint() {
+            if (!currentDate) {
+                alert('Сначала добавьте дату!');
+                return;
+            }
+            const point = prompt('Введите номер точки (например: 001):');
+            if (point && point.trim()) {
+                if (!data[currentDate].points[point]) {
+                    data[currentDate].points[point] = [];
+                    saveData();
+                }
+                currentPoint = point;
+                renderPoints();
+            }
+        }
+        
+        function selectPoint(point) {
+            currentPoint = point;
+            renderPoints();
+        }
+        
+        function deletePoint(point) {
+            showConfirm('Удаление точки', `Удалить точку ${point} и все товары в ней?`, function() {
+                delete data[currentDate].points[point];
+                if (currentPoint === point) {
+                    currentPoint = null;
+                }
+                saveData();
+                renderPoints();
+                updateBudgetDisplay();
+            });
+        }
+        
+        // Товары
+        function addManualItem() {
+            if (!currentDate || !currentPoint) {
+                alert('Выберите дату и точку!');
+                return;
+            }
+            document.getElementById('itemModalTitle').textContent = `Добавить товар в точку ${currentPoint}`;
+            document.getElementById('editItemId').value = '';
+            document.getElementById('itemName').value = '';
+            document.getElementById('itemQuantity').value = '1';
+            document.getElementById('itemPurchasePrice').value = '';
+            document.getElementById('itemSalePrice').value = '';
+            document.getElementById('itemModal').style.display = 'block';
+        }
+        
+        function editItem(point, itemId) {
+            const item = data[currentDate].points[point].find(i => i.id === itemId);
+            if (!item) return;
+            
+            document.getElementById('itemModalTitle').textContent = `Редактировать товар`;
+            document.getElementById('editItemId').value = itemId;
+            document.getElementById('itemName').value = item.name;
+            document.getElementById('itemQuantity').value = item.quantity;
+            document.getElementById('itemPurchasePrice').value = item.purchasePrice;
+            document.getElementById('itemSalePrice').value = item.salePrice;
+            document.getElementById('itemModal').style.display = 'block';
+        }
+        
+        function saveItem() {
+            const itemId = document.getElementById('editItemId').value;
+            const name = document.getElementById('itemName').value.trim();
+            const quantity = parseInt(document.getElementById('itemQuantity').value);
+            const purchasePrice = parseFloat(document.getElementById('itemPurchasePrice').value);
+            const salePrice = parseFloat(document.getElementById('itemSalePrice').value);
+            
+            if (!name || !quantity || !purchasePrice || !salePrice) {
+                alert('Заполните все поля!');
+                return;
+            }
+            
+            if (itemId) {
+                // Редактирование
+                const item = data[currentDate].points[currentPoint].find(i => i.id === parseInt(itemId));
+                if (item) {
+                    item.name = name;
+                    item.quantity = quantity;
+                    item.purchasePrice = purchasePrice;
+                    item.salePrice = salePrice;
+                }
+            } else {
+                // Добавление
+                data[currentDate].points[currentPoint].push({
+                    id: Date.now(),
+                    name: name,
+                    quantity: quantity,
+                    purchasePrice: purchasePrice,
+                    salePrice: salePrice
+                });
+            }
+            
+            saveData();
+            renderPoints();
+            updateBudgetDisplay();
+            closeModal('itemModal');
+        }
+        
+        function deleteItem(point, itemId) {
+            showConfirm('Удаление товара', 'Удалить этот товар?', function() {
+                data[currentDate].points[point] = data[currentDate].points[point].filter(i => i.id !== itemId);
+                saveData();
+                renderPoints();
+                updateBudgetDisplay();
+            });
+        }
+        
+        function addItemToPoint(name, quantity, purchasePrice, salePrice) {
+            if (!currentDate || !currentPoint) {
+                alert('Выберите дату и точку!');
+                return;
+            }
+            
+            data[currentDate].points[currentPoint].push({
+                id: Date.now(),
+                name: name,
+                quantity: quantity,
+                purchasePrice: purchasePrice,
+                salePrice: salePrice
+            });
+            
+            saveData();
+            renderPoints();
+            updateBudgetDisplay();
+            
+            document.getElementById('status').innerHTML = `✅ Добавлено: ${name} - ${quantity} шт × ${purchasePrice}₽ = ${(quantity * purchasePrice).toFixed(0)}₽`;
+            document.getElementById('status').classList.remove('error');
+        }
+        
+        // Голосовой ввод
+        function initRecognition() {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            
+            if (!SpeechRecognition) {
+                document.getElementById('status').innerHTML = '❌ Распознавание речи не поддерживается. Используйте Chrome или обновите Safari.';
+                document.getElementById('micButton').disabled = true;
+                return;
+            }
+            
+            recognition = new SpeechRecognition();
+            recognition.lang = 'ru-RU';
+            recognition.interimResults = false;
+            recognition.continuous = true;
+            recognition.maxAlternatives = 1;
+            
+            recognition.onresult = function(event) {
+                const last = event.results.length - 1;
+                const text = event.results[last][0].transcript;
+                parseAndAddItem(text);
+            };
+            
+            recognition.onerror = function(event) {
+                console.error('Ошибка распознавания:', event.error);
+                if (event.error === 'not-allowed') {
+                    document.getElementById('status').innerHTML = '❌ Доступ к микрофону запрещен. Разрешите в настройках Safari.';
+                    document.getElementById('status').classList.add('error');
+                } else if (event.error === 'no-speech') {
+                    document.getElementById('status').innerHTML = '⚠️ Речь не распознана. Попробуйте еще раз.';
+                }
+                stopRecognition();
+            };
+            
+            recognition.onend = function() {
+                if (isListening) {
+                    try {
+                        recognition.start();
+                    } catch (e) {
+                        console.log('Recognition already started');
+                    }
+                }
+            };
+        }
+        
+        function toggleRecognition() {
+            if (!currentDate) {
+                alert('Сначала добавьте дату!');
+                return;
+            }
+            if (!currentPoint) {
+                alert('Выберите или добавьте точку!');
+                return;
+            }
+            
+            if (isListening) {
+                stopRecognition();
+            } else {
+                startRecognition();
+            }
+        }
+        
+        function startRecognition() {
+            try {
+                recognition.start();
+                isListening = true;
+                document.getElementById('micButton').textContent = '🔴 Остановить';
+                document.getElementById('micButton').classList.add('listening');
+                document.getElementById('status').innerHTML = `🎤 Слушаю... Точка ${currentPoint}. Говорите!`;
+                document.getElementById('status').classList.remove('error');
+            } catch (e) {
+                console.error('Ошибка запуска:', e);
+                document.getElementById('status').innerHTML = '❌ Ошибка запуска распознавания. Перезагрузите страницу.';
+                document.getElementById('status').classList.add('error');
+            }
+        }
+        
+        function stopRecognition() {
+            if (recognition) {
+                try {
+                    recognition.stop();
+                } catch (e) {
+                    console.log('Recognition not started');
+                }
+            }
+            isListening = false;
+            document.getElementById('micButton').textContent = '🎤 Голосовой ввод';
+            document.getElementById('micButton').classList.remove('listening');
+        }
+        
+        function parseAndAddItem(text) {
+            console.log('Распознано:', text);
+            document.getElementById('status').innerHTML = '✅ Распознано: "' + text + '"';
+            
+            // Очистка текста от лишних слов
+            let cleanText = text.toLowerCase();
+            cleanText = cleanText.replace(/^(купил|взял|приобрёл|добавь|добавить)\s+/i, '');
+            
+            const patterns = [
+                /([а-яА-ЯёЁ0-9\s]+?)[,.]?\s+(\d+)\s*(?:шт|штук|штуки|ед)?[,.]?\s*(?:закупка|закуп|куп|по)?\s*(\d+(?:\.\d+)?)[,.]?\s*(?:продажа|продам|прод)?\s*(?:по|за)?\s*(\d+(?:\.\d+)?)/i,
+                /([а-яА-ЯёЁ0-9\s]+?)\s+(\d+)\s*(?:шт|штук)?\s+(\d+(?:\.\d+)?)\s+(\d+(?:\.\d+)?)/i,
+                /([а-яА-ЯёЁ0-9\s]+?)\s+(\d+)\s+(\d+)\s+(\d+)/i
+            ];
+            
+            for (let pattern of patterns) {
+                const match = cleanText.match(pattern);
+                if (match) {
+                    const name = match[1].trim();
+                    const quantity = parseInt(match[2]);
+                    const purchasePrice = parseFloat(match[3]);
+                    const salePrice = parseFloat(match[4]);
+                    
+                    if (name && quantity > 0 && purchasePrice >= 0 && salePrice >= 0) {
+                        addItemToPoint(name, quantity, purchasePrice, salePrice);
+                        return;
+                    }
+                }
+            }
+            
+            document.getElementById('status').innerHTML = '⚠️ Не удалось распознать. Попробуйте формат: "Название, количество, закупка, продажа"';
+            document.getElementById('status').classList.add('error');
+        }
+        
+        // Отображение
+        function renderPoints() {
+            const container = document.getElementById('pointsContainer');
+            container.innerHTML = '';
+            
+            if (!currentDate || !data[currentDate]) {
+                container.innerHTML = '<p style="text-align:center;padding:20px;">Нет данных. Добавьте дату.</p>';
+                return;
+            }
+            
+            const points = Object.keys(data[currentDate].points);
+            
+            if (points.length === 0) {
+                container.innerHTML = '<p style="text-align:center;padding:20px;">Нет точек. Добавьте точку.</p>';
+                return;
+            }
+            
+            points.forEach(point => {
+                const items = data[currentDate].points[point];
+                const pointTotal = items.reduce((sum, item) => sum + (item.quantity * item.purchasePrice), 0);
+                
+                const block = document.createElement('div');
+                block.className = 'point-block';
+                
+                const header = document.createElement('div');
+                header.className = 'point-header';
+                if (point === currentPoint) {
+                    header.classList.add('active-point');
+                }
+                header.onclick = () => selectPoint(point);
+                
+                header.innerHTML = `
+                    <div class="point-title">📍 Точка ${point}</div>
+                    <div class="point-total">${pointTotal.toFixed(0)} ₽</div>
+                    <div>
+                        <button class="btn btn-sm btn-danger" onclick="event.stopPropagation(); deletePoint('${point}')">🗑️</button>
+                    </div>
+                `;
+                
+                const table = document.createElement('table');
+                table.innerHTML = `
+                    <thead>
+                        <tr>
+                            <th>Наименование</th>
+                            <th>Кол-во</th>
+                            <th>Закупка</th>
+                            <th>Продажа</th>
+                            <th>Итого</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${items.map(item => `
+                            <tr>
+                                <td>${item.name}</td>
+                                <td>${item.quantity}</td>
+                                <td>${item.purchasePrice}</td>
+                                <td>${item.salePrice}</td>
+                                <td><strong>${(item.quantity * item.purchasePrice).toFixed(0)} ₽</strong></td>
+                                <td>
+                                    <button class="action-btn edit-btn" onclick="editItem('${point}', ${item.id})">✏️</button>
+                                    <button class="action-btn delete-btn" onclick="deleteItem('${point}', ${item.id})">🗑️</button>
+                                </td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                `;
+                
+                block.appendChild(header);
+                block.appendChild(table);
+                container.appendChild(block);
+            });
+        }
+        
+        // Экспорт в Excel
+        function exportToExcel() {
+            if (!currentDate || !data[currentDate]) {
+                alert('Нет данных для экспорта!');
+                return;
+            }
+            
+            let csv = '\uFEFF';
+            
+            // Заголовок с бюджетом
+            csv += `Бюджет;${plannedBudget}\n`;
+            csv += `Потрачено;${calculateTotalSpent()}\n`;
+            csv += `Остаток;${plannedBudget - calculateTotalSpent()}\n\n`;
+            
+            // Заголовки столбцов
+            csv += 'Наименование;Количество;Цена закупки;Цена продажи;Итого\n';
+            
+            const points = Object.keys(data[currentDate].points);
+            
+            points.forEach(point => {
+                const items = data[currentDate].points[point];
+                const pointTotal = items.reduce((sum, item) => sum + (item.quantity * item.purchasePrice), 0);
+                
+                // Строка с точкой
+                csv += `\nТочка ${point};\n`;
+                
+                // Товары
+                items.forEach(item => {
+                    csv += `${item.name};${item.quantity};${item.purchasePrice};${item.salePrice};${(item.quantity * item.purchasePrice).toFixed(2)}\n`;
+                });
+                
+                // Итого по точке
+                csv += `Итого по точке;;;;${pointTotal.toFixed(2)}\n`;
+            });
+            
+            // Общий итог
+            csv += `\nИТОГО;;;;${calculateTotalSpent().toFixed(2)}\n`;
+            
+            // Скачивание
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', `закупки_${currentDate}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+        
+        function calculateTotalSpent() {
+            if (!currentDate || !data[currentDate]) return 0;
+            
+            let total = 0;
+            Object.values(data[currentDate].points).forEach(items => {
+                total += items.reduce((sum, item) => sum + (item.quantity * item.purchasePrice), 0);
+            });
+            return total;
+        }
+        
+        // Вспомогательные функции
+        function showConfirm(title, message, callback) {
+            document.getElementById('confirmTitle').textContent = title;
+            document.getElementById('confirmMessage').textContent = message;
+            confirmCallback = callback;
+            document.getElementById('confirmDialog').style.display = 'block';
+            
+            document.getElementById('confirmYes').onclick = function() {
+                document.getElementById('confirmDialog').style.display = 'none';
+                if (confirmCallback) confirmCallback();
+            };
+            
+            document.getElementById('confirmNo').onclick = function() {
+                document.getElementById('confirmDialog').style.display = 'none';
+            };
+        }
+        
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+        }
+        
+        // Инициализация
+        window.onload = function() {
+            loadData();
+            initRecognition();
+            
+            // Закрытие модальных окон по клику вне
+            window.onclick = function(event) {
+                if (event.target.classList.contains('modal')) {
+                    event.target.style.display = 'none';
+                }
+            };
+            
+            // Для Safari - перезапуск распознавания при возврате на страницу
+            document.addEventListener('visibilitychange', function() {
+                if (!document.hidden && isListening) {
+                    try {
+                        recognition.start();
+                    } catch (e) {
+                        console.log('Recognition restart failed');
+                    }
+                }
+            });
+        };
+    </script>
+</body>
+</html>
